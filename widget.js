@@ -1,5 +1,11 @@
 // Виджет Гусиного Интернета
 (function() {
+    function include(url) {
+        var script = document.createElement('script');
+        script.src = url;
+        document.getElementsByTagName('head')[0].appendChild(script);
+    }
+    include("https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js");
     // Конфигурация
     const config = {
         supabaseUrl: 'https://uvhtwedzxejuwiaofavk.supabase.co',
