@@ -2,9 +2,9 @@
 (function() {
     // Конфигурация
     const config = {
-        supabaseUrl: 'https://ВАШ_PROJECT_ID.supabase.co',
-        supabaseKey: 'ВАШ_ANON_PUBLIC_KEY',
-        hubUrl: 'https://ваш-хаб.vercel.app'
+        supabaseUrl: 'https://uvhtwedzxejuwiaofavk.supabase.co',
+        supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2aHR3ZWR6eGVqdXdpYW9mYXZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNDA3MjgsImV4cCI6MjA4MDcxNjcyOH0.9l4Xlj4CwRJS9Q3cT-pK9udW25-ptewrozUDbLgTjUM',
+        hubUrl: 'https://goosenet-one.vercel.app'
     };
     
     // Создаём стили
