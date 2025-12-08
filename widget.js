@@ -12,6 +12,7 @@
         script.src = url;
         document.getElementsByTagName('head')[0].appendChild(script);
     }
+    include("https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js");
     
     // Глобальные переменные
     let supabaseClient = null;
@@ -36,7 +37,7 @@
     // Инициализация
     async function init() {
         try {
-            include("https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js");
+            
             supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
             
             // Проверяем текущую сессию
