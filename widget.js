@@ -31,7 +31,7 @@
     // Инициализация
     async function init() {
         try {
-            await loadSupabase();
+            include("https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js");
             supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
             
             // Проверяем текущую сессию
