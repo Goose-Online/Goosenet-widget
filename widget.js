@@ -7,6 +7,11 @@
         hubUrl: 'https://goosenet-one.vercel.app/',
         loginUrl: 'https://goosenet-one.vercel.app/login.html'
     };
+    function include(url) {
+        var script = document.createElement('script');
+        script.src = url;
+        document.getElementsByTagName('head')[0].appendChild(script);
+    }
     
     // Глобальные переменные
     let supabaseClient = null;
