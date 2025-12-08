@@ -262,10 +262,10 @@
                 <div class="menu-item" onclick="window.open('${config.hubUrl}', '_blank')">
                     🏠 Перейти в хаб
                 </div>
-                <div class="menu-item" onclick="window.open('${config.hubUrl}', '_blank')">
+                <div class="menu-item" onclick="window.open('${config.hubUrl}/profile.html', '_blank')">
                     👤 Мой профиль
                 </div>
-                <div class="menu-item" onclick="window.open('${config.hubUrl}', '_blank')">
+                <div class="menu-item" onclick="window.open('${config.hubUrl}/sites.html', '_blank')">
                     🌐 Мои сайты <span class="site-count" id="site-count">0</span>
                 </div>
                 <div class="menu-divider"></div>
