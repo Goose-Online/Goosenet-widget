@@ -24,7 +24,7 @@
             
             // Загружаем Supabase
             const script = document.createElement('script');
-            script.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+            script.src = 'https://unpkg.com/@supabase/supabase-js@2';
             
             script.onload = () => {
                 console.log('🦢 Supabase загружен');
