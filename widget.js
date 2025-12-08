@@ -1,4 +1,4 @@
-// Виджет Гусиного Интернета v3.0 (с popup-авторизацией)
+// Виджет Гусиного Интернета v3.1 (исправленная версия)
 (function() {
     // Конфигурация
     const config = {
@@ -7,38 +7,71 @@
         hubUrl: 'https://goosenet-one.vercel.app/',
         loginUrl: 'https://goosenet-one.vercel.app/login.html'
     };
-    function include(url) {
-        var script = document.createElement('script');
-        script.src = url;
-        document.getElementsByTagName('head')[0].appendChild(script);
-    }
-    include("https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js");
     
     // Глобальные переменные
     let supabaseClient = null;
     let currentUser = null;
+    let isInitialized = false;
     
-    // Загружаем Supabase
-    function loadSupabase() {
+    // Загружаем Supabase и инициализируем
+    function loadAndInit() {
         return new Promise((resolve, reject) => {
+            // Проверяем, не загружен ли уже Supabase
             if (window.supabase) {
-                resolve(window.supabase);
+                initSupabase().then(resolve).catch(reject);
                 return;
             }
             
+            // Загружаем Supabase
             const script = document.createElement('script');
             script.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-            script.onload = () => resolve(window.supabase);
-            script.onerror = reject;
+            
+            script.onload = () => {
+                console.log('🦢 Supabase загружен');
+                initSupabase().then(resolve).catch(reject);
+            };
+            
+            script.onerror = (error) => {
+                console.error('🦢 Ошибка загрузки Supabase:', error);
+                reject(error);
+            };
+            
             document.head.appendChild(script);
         });
     }
     
-    // Инициализация
-    async function init() {
+    // Инициализация Supabase клиента
+    async function initSupabase() {
         try {
+            // Проверяем, что библиотека загружена
+            if (!window.supabase) {
+                throw new Error('Supabase library not loaded');
+            }
             
+            // Создаём клиент
             supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+            
+            // Проверяем соединение
+            const { data, error } = await supabaseClient.from('sites').select('count', { count: 'exact', head: true });
+            
+            if (error) {
+                console.warn('🦢 Предупреждение при проверке соединения:', error.message);
+            } else {
+                console.log('🦢 Соединение с Supabase установлено');
+            }
+            
+            return supabaseClient;
+        } catch (error) {
+            console.error('🦢 Ошибка инициализации Supabase:', error);
+            throw error;
+        }
+    }
+    
+    // Инициализация виджета
+    async function initWidget() {
+        try {
+            // Загружаем и инициализируем Supabase
+            await loadAndInit();
             
             // Проверяем текущую сессию
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -54,6 +87,7 @@
             
             // Слушаем изменения авторизации
             supabaseClient.auth.onAuthStateChange((event, session) => {
+                console.log('🦢 Auth state changed:', event, session?.user?.email);
                 if (session) {
                     currentUser = session.user;
                     updateWidgetUI(true);
@@ -63,8 +97,13 @@
                 }
             });
             
+            isInitialized = true;
+            console.log('🦢 Виджет инициализирован');
+            
         } catch (error) {
             console.error('🦢 Ошибка инициализации виджета:', error);
+            // Показываем базовый интерфейс даже при ошибке
+            updateWidgetUI(false);
         }
     }
     
@@ -72,7 +111,9 @@
     function handleLoginMessage(event) {
         if (event.data.type === 'GOOSE_LOGIN_COMPLETE' && event.data.success) {
             // Обновляем сессию
-            supabaseClient.auth.setSession(event.data.session);
+            if (supabaseClient) {
+                supabaseClient.auth.setSession(event.data.session);
+            }
         }
     }
     
@@ -195,6 +236,10 @@
             .goose-overlay.active {
                 display: block;
             }
+            .goose-loading {
+                opacity: 0.7;
+                cursor: wait;
+            }
         `;
         document.head.appendChild(style);
         
@@ -204,27 +249,27 @@
         widget.innerHTML = `
             <button class="goose-btn" id="goose-main-btn">
                 <span>🦢</span>
-                <span id="btn-text">Гусиный ключ</span>
+                <span id="btn-text">Загрузка...</span>
             </button>
             <div class="goose-user-menu" id="user-menu">
                 <div class="user-info">
                     <div class="user-avatar" id="user-avatar">Г</div>
                     <div>
-                        <div id="user-name">Гость</div>
-                        <div class="user-email" id="user-email">войдите в аккаунт</div>
+                        <div id="user-name">Загрузка...</div>
+                        <div class="user-email" id="user-email">инициализация виджета</div>
                     </div>
                 </div>
                 <div class="menu-item" onclick="window.open('${config.hubUrl}', '_blank')">
                     🏠 Перейти в хаб
                 </div>
-                <div class="menu-item" onclick="window.open('${config.hubUrl}/profile', '_blank')">
+                <div class="menu-item" onclick="window.open('${config.hubUrl}', '_blank')">
                     👤 Мой профиль
                 </div>
-                <div class="menu-item" onclick="window.open('${config.hubUrl}/sites', '_blank')">
+                <div class="menu-item" onclick="window.open('${config.hubUrl}', '_blank')">
                     🌐 Мои сайты <span class="site-count" id="site-count">0</span>
                 </div>
                 <div class="menu-divider"></div>
-                <div class="menu-item logout-btn" onclick="gooseLogout()">
+                <div class="menu-item logout-btn" id="logout-btn">
                     🚪 Выйти
                 </div>
             </div>
@@ -233,8 +278,12 @@
         document.body.appendChild(widget);
         
         // Обработчики событий
-        document.getElementById('goose-main-btn').addEventListener('click', toggleMenu);
+        const mainBtn = document.getElementById('goose-main-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        mainBtn.addEventListener('click', toggleMenu);
         document.getElementById('overlay').addEventListener('click', closeMenu);
+        logoutBtn.addEventListener('click', gooseLogout);
         
         // Закрытие меню при клике вне
         document.addEventListener('click', (event) => {
@@ -248,16 +297,24 @@
     function updateWidgetUI(isLoggedIn) {
         const btn = document.getElementById('goose-main-btn');
         const btnText = document.getElementById('btn-text');
-        const userMenu = document.getElementById('user-menu');
         const userName = document.getElementById('user-name');
         const userEmail = document.getElementById('user-email');
         const userAvatar = document.getElementById('user-avatar');
         
+        if (!isInitialized) {
+            btnText.textContent = 'Инициализация...';
+            btn.classList.add('goose-loading');
+            return;
+        }
+        
+        btn.classList.remove('goose-loading');
+        
         if (isLoggedIn && currentUser) {
-            btnText.textContent = currentUser.email.split('@')[0];
-            userName.textContent = currentUser.email.split('@')[0];
+            const username = currentUser.email.split('@')[0];
+            btnText.textContent = username;
+            userName.textContent = username;
             userEmail.textContent = currentUser.email;
-            userAvatar.textContent = currentUser.email[0].toUpperCase();
+            userAvatar.textContent = username[0].toUpperCase();
             userAvatar.style.background = stringToColor(currentUser.email);
             
             // Загружаем количество сайтов пользователя
@@ -324,8 +381,14 @@
     // Выход из системы
     async function gooseLogout() {
         if (supabaseClient) {
-            await supabaseClient.auth.signOut();
-            closeMenu();
+            try {
+                await supabaseClient.auth.signOut();
+                closeMenu();
+                // Обновляем UI
+                updateWidgetUI(false);
+            } catch (error) {
+                console.error('Ошибка при выходе:', error);
+            }
         }
     }
     
@@ -333,6 +396,12 @@
     function toggleMenu() {
         const menu = document.getElementById('user-menu');
         const overlay = document.getElementById('overlay');
+        
+        // Если виджет ещё не инициализирован, не показываем меню
+        if (!isInitialized) {
+            alert('Виджет инициализируется...');
+            return;
+        }
         
         if (currentUser) {
             // Если пользователь авторизован - показываем меню
@@ -354,14 +423,25 @@
     window.openGooseLogin = openLoginPopup;
     
     // Запускаем при загрузке страницы
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            createWidget();
-            init();
-        });
-    } else {
+    function startWidget() {
+        console.log('🦢 Запуск виджета Гусиного Интернета');
+        
+        // Сначала создаём интерфейс
         createWidget();
-        init();
+        
+        // Затем инициализируем (после полной загрузки страницы)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('🦢 DOM загружен, инициализируем виджет');
+                initWidget();
+            });
+        } else {
+            console.log('🦢 DOM уже загружен, инициализируем виджет');
+            initWidget();
+        }
     }
+    
+    // Запускаем виджет
+    startWidget();
     
 })();
